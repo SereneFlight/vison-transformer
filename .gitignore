@@ -1,0 +1,7 @@
+data/
+checkpoints/
+*.pth
+__pycache__/
+runs/
+logs/
+wandb/
