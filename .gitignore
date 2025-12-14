@@ -1,7 +1,32 @@
-data/
-checkpoints/
-*.pth
+# Python
 __pycache__/
-runs/
-logs/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# 大文件
+*.pth
+*.pt
+*.ckpt
+
+# 数据集
+data/
+datasets/
+
+# 训练日志
 wandb/
+logs/
+runs/
+checkpoints/
+
+# 环境
+.venv/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp

@@ -76,4 +76,65 @@ class TransformerBlock(nn.Module):
         return x
 
 
+class VisionTransformer(nn.Module):
+    def __init__(self, img_size=224, patch_size=16, num_classes=10, embed_dim=768, depth=6, mlp_ratio=4, num_heads=12, drop=0.1):  # 修复1: 加冒号
+        super().__init__()  # 修复2: super() 要加括号
+        self.embed_dim = embed_dim
+
+        # Patch Embedding
+        self.patch_embed = Patch_embed(img_size=img_size, patch_size=patch_size, patch_embed=embed_dim, input_dim=3)  # 修复3: input_dim
+
+        # CLS token
+        self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
+
+        # Position Embedding - 修复4: 正确计算大小
+        num_patches = (img_size // patch_size) ** 2  # 196
+        self.pos_embed = nn.Parameter(torch.randn(1, num_patches + 1, embed_dim))  # 197
+
+        # Dropout
+        self.pos_drop = nn.Dropout(drop)
+
+        # 修复6: 创建多个 TransformerBlock
+        self.blocks = nn.ModuleList([
+            TransformerBlock(embed_dim, num_heads, mlp_ratio, drop)
+            for _ in range(depth)
+        ])
+
+        # LayerNorm
+        self.norm = nn.LayerNorm(embed_dim)
+
+        # 修复8: 添加分类头
+        self.head = nn.Linear(embed_dim, num_classes)
+
+    def forward(self, x):
+        B = x.size(0)
+
+        # Patch Embedding
+        x = self.patch_embed(x)  # (B, 196, 768)
+
+        # 扩展 CLS token
+        cls_token = self.cls_token.expand(B, -1, -1)  # (B, 1, 768)
+
+        # 修复5: CLS token 放在最前面
+        x = torch.cat([cls_token, x], dim=1)  # (B, 197, 768)
+
+        # 加上位置编码
+        x = x + self.pos_embed
+        x = self.pos_drop(x)
+
+        # 修复7: 正确遍历所有 Transformer Block
+        for block in self.blocks:
+            x = block(x)
+
+        # LayerNorm
+        x = self.norm(x)
+
+        # 取出 CLS token 并分类
+        cls_token_final = x[:, 0]  # (B, 768)
+        output = self.head(cls_token_final)  # (B, num_classes)
+
+        return output
+
+
+
 
